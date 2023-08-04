@@ -244,6 +244,21 @@ var runWithPipeline = &v1beta1.CustomRun{
 	},
 }
 
+var runWithPipelineCancelled = &v1beta1.CustomRun{
+	ObjectMeta: metav1.ObjectMeta{
+		Name:      "run-with-pipeline",
+		Namespace: "foo",
+	},
+	Spec: v1beta1.CustomRunSpec{
+		CustomRef: &v1beta1.TaskRef{
+			APIVersion: "tekton.dev/v1beta1",
+			Kind:       "Pipeline",
+			Name:       "pipeline",
+		},
+		Status: "RunCancelled",
+	},
+}
+
 var runWithoutPipelineName = &v1beta1.CustomRun{
 	ObjectMeta: metav1.ObjectMeta{
 		Name:      "run-with-missing-pipeline",
@@ -364,6 +379,18 @@ func TestReconcilePipRun(t *testing.T) {
 		expectedEvents: []string{
 			"Normal Started ",
 			"Normal Succeeded ",
+		},
+	}, {
+		name:           "Reconcile a run with a cancelled status",
+		pipeline:       p,
+		run:            runWithPipelineCancelled,
+		pipelineRun:    running(pr),
+		expectedMessage: "PipelineRun run-with-pipeline was cancelled",
+		expectedStatus: corev1.ConditionFalse,
+		expectedReason: v1beta1.PipelineRunReasonCancelled,
+		expectedEvents: []string{
+			"Normal Started ",
+			"Warning Failed PipelineRun run-with-pipeline was cancelled",
 		},
 	}}
 	for _, tc := range testcases {

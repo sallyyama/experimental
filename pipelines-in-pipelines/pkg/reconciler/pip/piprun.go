@@ -85,6 +85,13 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, run *v1beta1.CustomRun) 
 		events.Emit(ctx, nil, afterCondition, run)
 	}
 
+	// If the run has been cancelled, cancel the pipelinerun
+	if run.IsCancelled() {
+		if pr := r.getPipelineRun(ctx, run); pr != nil {
+			pr.Status.MarkFailed(v1beta1.PipelineRunReasonCancelled.String(), "PipelineRun %s was cancelled", run.Name)
+		}
+	}
+
 	if run.IsDone() {
 		logger.Infof("Run %s/%s is done", run.Namespace, run.Name)
 		return nil
