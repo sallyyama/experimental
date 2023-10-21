@@ -268,6 +268,13 @@ func getPipelineRunSpec(run *v1beta1.CustomRun, ownerPipelineRun *v1beta1.Pipeli
 	}
 	if ownerPipelineRun != nil {
 		pipelineRunSpec.PodTemplate = ownerPipelineRun.Spec.PodTemplate
+		if pipelineRunSpec.Timeout == nil {
+			if ownerPipelineRun.Spec.Timeout != nil {
+				pipelineRunSpec.Timeout = ownerPipelineRun.Spec.Timeout
+			} else if ownerPipelineRun.Spec.Timeouts != nil {
+				pipelineRunSpec.Timeouts = ownerPipelineRun.Spec.Timeouts
+			}
+		}
 	}
 	return pipelineRunSpec
 }
