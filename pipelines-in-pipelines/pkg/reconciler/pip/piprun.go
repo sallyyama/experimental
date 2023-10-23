@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -138,8 +139,10 @@ func (r *Reconciler) reconcile(ctx context.Context, run *v1beta1.CustomRun) erro
 	// pipelinerun doesn't exist yet, create a new pipelinerun
 	if _, err := r.createPipelineRun(ctx, run); err != nil {
 		logger.Errorf("Run %s/%s got an error creating PipelineRun - %v", run.Namespace, run.Name, err)
-		run.Status.MarkCustomRunFailed(ReasonRunFailedCreatingPipelineRun,
-			"Run got an error creating pipelineRun - %v", err)
+		if !strings.Contains(err.Error(), "already exists") {
+			run.Status.MarkCustomRunFailed(ReasonRunFailedCreatingPipelineRun,
+				"Run got an error creating pipelineRun - %v", err)
+		}
 	}
 
 	return nil
